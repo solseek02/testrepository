@@ -2,65 +2,52 @@ pipeline {
     agent any
 
     environment {
-        // Minikube 환경 변수 설정
-        DOCKER_TLS_VERIFY = '1'
-        DOCKER_HOST = 'tcp://192.168.58.2:2376'
-        DOCKER_CERT_PATH = '/var/lib/jenkins/.minikube/certs'
-        MINIKUBE_ACTIVE_DOCKERD = 'minikube'
-        KUBECONFIG = '/home/fedora/.kube/config'
+        // Minikube Docker 환경 설정
+        KUBECONFIG = "/home/fedora/.kube/config"
+    }
+
+    triggers {
+        // GitHub에서 push 이벤트 발생 시 트리거
+        githubPush()
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
-                git branch: 'main',
-                    credentialsId: 'github-credentials',
-                    url: 'https://github.com/solseek02/testrepository.git'
+                echo 'Cloning Repository...'
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                docker build -t myapp:latest .
-                '''
-            }
-        }
-
-        stage('Push Docker Image to Minikube') {
-            steps {
-                sh '''
-                minikube image load myapp:latest
-                '''
+                echo 'Building Docker Image...'
+                script {
+                    // Minikube Docker 환경 변수 설정
+                    sh 'eval $(minikube docker-env)'
+                    // Docker 이미지 빌드
+                    sh 'docker build -t myapp:latest .'
+                }
             }
         }
 
         stage('Deploy to Minikube') {
             steps {
-                sh '''
-                kubectl apply -f deployment.yaml
-                '''
-            }
-        }
-
-        stage('Expose Service via Ngrok') {
-            steps {
-                sh '''
-                nohup ngrok http 8080 > /dev/null 2>&1 &
-                '''
+                echo 'Deploying to Minikube...'
+                script {
+                    // Kubernetes 배포 적용
+                    sh 'kubectl apply -f deployment.yaml'
+                }
             }
         }
     }
 
     post {
-        always {
-            echo "Pipeline completed!"
-        }
         success {
-            echo "Pipeline executed successfully!"
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo "Pipeline failed!"
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
