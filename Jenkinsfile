@@ -2,20 +2,18 @@ pipeline {
     agent any
 
     environment {
-        // Minikube Docker 환경 설정
         KUBECONFIG = "/home/fedora/.kube/config"
     }
 
     triggers {
-        // GitHub에서 push 이벤트 발생 시 트리거
-        githubPush()
+        githubPush()  // GitHub Push 이벤트가 발생하면 자동으로 트리거
     }
 
     stages {
         stage('Checkout') {
             steps {
                 echo 'Cloning Repository...'
-                checkout scm
+                checkout scm  // GitHub 리포지토리를 체크아웃
             }
         }
 
@@ -23,10 +21,8 @@ pipeline {
             steps {
                 echo 'Building Docker Image...'
                 script {
-                    // Minikube Docker 환경 변수 설정
-                    sh 'eval $(minikube docker-env)'
-                    // Docker 이미지 빌드
-                    sh 'docker build -t myapp:latest .'
+                    sh 'eval $(minikube docker-env)'  // Minikube Docker 환경 설정
+                    sh 'docker build -t myapp:latest .'  // Docker 이미지 빌드
                 }
             }
         }
@@ -35,8 +31,7 @@ pipeline {
             steps {
                 echo 'Deploying to Minikube...'
                 script {
-                    // Kubernetes 배포 적용
-                    sh 'kubectl apply -f deployment.yaml'
+                    sh 'kubectl apply -f deployment.yaml'  // Kubernetes 리소스 배포
                 }
             }
         }
@@ -51,4 +46,3 @@ pipeline {
         }
     }
 }
-
