@@ -21,7 +21,7 @@ pipeline {
             steps {
                 echo 'Building Docker Image...'
                 script {
-                    sh 'eval $(minikube docker-env)'  // Minikube Docker 환경 설정
+                    sh 'eval $(minikube -p minikube docker-env)'  // Minikube Docker 환경 설정
                     sh 'docker build -t myapp:latest .'  // Docker 이미지 빌드
                 }
             }
